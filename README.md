@@ -1,58 +1,41 @@
+#  Mini API Serverless – AWS CDK, Lambda, API Gateway, S3
 
-# Welcome to your CDK Python project!
+Ce projet présente une architecture serverless déployée avec **AWS CDK** en Python.  
+Il a pour objectif de démontrer la mise en place d’une API REST simple, sécurisée et conforme au free tier AWS.
 
-This is a blank project for CDK development with Python.
+## Objectif
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+Construire une API minimale permettant :
+- de vérifier l’état du service via `GET /health`
+- d’envoyer un contenu texte vers un bucket S3 via `POST /upload`
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+## Architecture
 
-To manually create a virtualenv on MacOS and Linux:
+**Services utilisés :**
+- **AWS Lambda** : exécution du code Python sans serveur  
+- **API Gateway** : exposition des endpoints HTTP  
+- **S3** : stockage des fichiers envoyés  
+- **IAM** : gestion des droits d’accès (principe du “least privilege”)  
+- **CloudWatch** : logs et suivi des métriques
 
-```
-$ python3 -m venv .venv
-```
+**Flux principal :**
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
+### Endpoints
+| Méthode | Route | Description |
+|----------|--------|-------------|
+| GET | `/health` | Vérifie le statut de l’API |
+| POST | `/upload` | Reçoit un JSON avec un nom de fichier et un contenu, puis enregistre le fichier sur S3 |
 
-```
-$ source .venv/bin/activate
-```
+**Exemple d’appel :**
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"filename":"note.txt","content":"hello from lambda"}' \
+  https://<api-id>.execute-api.eu-west-3.amazonaws.com/prod/upload
 
-If you are a Windows platform, you would activate the virtualenv like this:
-
-```
-% .venv\Scripts\activate.bat
-```
-
-Once the virtualenv is activated, you can install the required dependencies.
-
-```
-$ pip install -r requirements.txt
-```
-
-At this point you can now synthesize the CloudFormation template for this code.
-
-```
-$ cdk synth
-```
-
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
-
-## Useful commands
-
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
-
-Enjoy!
+{
+  "message": "uploaded",
+  "key": "uploads/note.txt",
+  "bucket": "<bucket-name>",
+  "time": "2025-10-06T22:08:12.372977+00:00"
+}
